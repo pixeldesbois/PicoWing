@@ -57,10 +57,10 @@ void LedManager::applyState(LedState state){
 
 // Codes couleur standardisés
 void LedManager::setPairingMode()     { setState(LedState::BLINK_BLUE); }
-void LedManager::setPairAck()         { setState(LedState::BLINK_BLUE); }
+void LedManager::setPairAck()         { setState(LedState::BLUE); }
 void LedManager::setTrimMode()        { setState(LedState::BLINK_WHITE); }
 void LedManager::setGameModeEasy()    { setState(LedState::GREEN); }
 void LedManager::setGameModeHard()    { setState(LedState::RED); }
 void LedManager::setBatteryLow()      { setState(LedState::ORANGE); }
-void LedManager::setBatteryCrit() { setState(LedState::BLINK_RED); }
+void LedManager::setBatteryCrit()     { setState(LedState::BLINK_RED); }
 

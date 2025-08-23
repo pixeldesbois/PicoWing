@@ -36,7 +36,8 @@ private:
     std::vector<RadioRecvHandler> recvHandlers;
 
     void handleRecv(const uint8_t* mac, const uint8_t* data, int len);
-
+    void (*recvCallback)(const uint8_t*, const uint8_t*, int) = nullptr;
+    
     static void onDataRecvStatic(const uint8_t* mac, const uint8_t* data, int len);
     static void onDataSentStatic(const uint8_t* mac, esp_now_send_status_t status);
 

@@ -18,7 +18,7 @@ void RadioManager::begin(uint8_t ch){
 
     if(esp_now_init() != ESP_OK){
         DBG("❌ esp_now_init failed\n");
-        while(1) delay(1000);
+        ESP.restart();
     }
 
     esp_now_register_recv_cb(onDataRecvStatic);
