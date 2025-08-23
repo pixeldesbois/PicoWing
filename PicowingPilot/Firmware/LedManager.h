@@ -2,35 +2,29 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 
-#define LED_PIN   7
-#define LED_COUNT 1
-
-enum LedState {
-    LED_OFF,
-    LED_RED,
-    LED_GREEN,
-    LED_BLUE,
-    LED_ORANGE,
-    LED_WHITE,
-    LED_CYAN,
-    LED_VIOLET,
-    LED_BLINK_RED,
-    LED_BLINK_GREEN,
-    LED_BLINK_BLUE,
-    LED_BLINK_ORANGE,
-    LED_BLINK_WHITE,
-    LED_BLINK_CYAN
+enum class LedState : uint8_t {
+    OFF,
+    GREEN,
+    RED,
+    BLUE,
+    WHITE,
+    ORANGE,
+    BLINK_GREEN,
+    BLINK_RED,
+    BLINK_BLUE,
+    BLINK_WHITE,
 };
 
 class LedManager {
 public:
-    LedManager();
-    void begin();
-    void set(LedState state);
-    void override(LedState state, unsigned long durationMs = 2000);
-    void update();
+    LedManager(uint8_t pin, uint8_t numPixels=1);
 
-    // fonctions “prêtes à l’emploi” pour le projet
+    void begin();
+    void setState(LedState state);              // état courant
+    void overrideState(LedState state, uint32_t durationMs); // override temporaire
+    void update();                              // à appeler régulièrement
+
+    // Codes couleur standardisés
     void setPairingMode();     // clignotant bleu
     void setPairAck();         // bleu fixe
     void setTrimMode();        // clignotant blanc
@@ -41,9 +35,9 @@ public:
 
 private:
     Adafruit_NeoPixel strip;
-    LedState current;
-    LedState overrideState;
-    unsigned long overrideUntil;
+    LedState currentState;
+    LedState overrideLed;
+    uint32_t overrideTimer;
 
-    void apply(LedState state, bool blinkPhase);
+    void applyState(LedState state);
 };
