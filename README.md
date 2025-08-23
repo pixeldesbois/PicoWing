@@ -52,7 +52,7 @@ carte DIY pemettant de gerer l'étage de puissance vers les moteurs
 lipo 1s
 2 moteurs coreless avec les hélices
 
-*(BOM complet dans le dossier `/PicowingPilot/Firmware`)*
+
 
 
 
