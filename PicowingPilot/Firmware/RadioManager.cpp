@@ -16,7 +16,7 @@ void RadioManager::begin() {
 
     if (esp_now_init() != ESP_OK) {
         DBG("esp_now_init failed\n");
-        while (1) { delay(1000); }
+        ESP.restart();
     }
 
     registerCallbacks();

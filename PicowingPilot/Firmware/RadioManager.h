@@ -33,6 +33,7 @@ private:
 
     static void onDataRecvStatic(const uint8_t* mac, const uint8_t* data, int len);
     static void onDataSentStatic(const uint8_t* mac, esp_now_send_status_t status);
+    void (*recvCallback)(const uint8_t*, const uint8_t*, int) = nullptr;
     void registerCallbacks();
 
     // Singleton pour les callbacks statiques
