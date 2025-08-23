@@ -8,10 +8,11 @@ RadioManager::RadioManager() : paired(false) {
     instance = this;
 }
 
-void RadioManager::begin() {
+void RadioManager::begin(uint8_t ch) {
+    channel = ch;
     WiFi.mode(WIFI_STA);
     esp_wifi_set_promiscuous(true);
-    esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
+    esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
     esp_wifi_set_promiscuous(false);
 
     if (esp_now_init() != ESP_OK) {
@@ -21,7 +22,7 @@ void RadioManager::begin() {
 
     registerCallbacks();
 
-    // Restauration du MAC depuis NVS
+    // Charger MAC depuis NVS
     prefs.begin("picowing", true);
     size_t n = prefs.getBytes("mac", pairedMac, 6);
     if (n == 6) {
@@ -31,7 +32,7 @@ void RadioManager::begin() {
         // Ajout du peer connu
         esp_now_peer_info_t peer{};
         memcpy(peer.peer_addr, pairedMac, 6);
-        peer.channel = 1;
+        peer.channel = channel;
         peer.encrypt = false;
         esp_now_add_peer(&peer);
     }
@@ -59,7 +60,7 @@ void RadioManager::setPairedMac(const uint8_t mac[6]) {
 
     esp_now_peer_info_t peer{};
     memcpy(peer.peer_addr, mac, 6);
-    peer.channel = 1;
+    peer.channel = channel;
     peer.encrypt = false;
     esp_now_add_peer(&peer);
 }
