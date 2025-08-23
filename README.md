@@ -6,7 +6,7 @@
 ATTENTION ! Je viens de commencer le projet. Donc rien n'est fonctionnel pour le moment. Je viendrais mettre à jour au fur et à mesure de mes avancées. 
 ---
 
-## 🚀 Présentation
+## Présentation
 
 L’objectif du projet est de transformer un simple avion en papier en appareil RC complet,  
 grâce à des cartes électroniques ultra-compacte intégrant :
@@ -53,7 +53,7 @@ lipo 1s
 
 ---
 
-## 🎯 Objectifs  - PARTIE A  VENIR
+## Objectifs  - PARTIE A  VENIR
 
 - Poids total électronique < **5 g**
 - Autonomie > **10 min**
@@ -62,7 +62,7 @@ lipo 1s
 
 ---
 
-## 📜 Licence
+## Licence
 
 Ce projet est distribué sous licence **MIT** pour le code et **CERN-OHL-S** pour le hardware.
 
@@ -76,7 +76,7 @@ Ce projet est distribué sous licence **MIT** pour le code et **CERN-OHL-S** pou
 
 ---
 
-## 🤝 Contributions
+## Contributions
 
 Les contributions sont les bienvenues !  
 Forkez, ouvrez des issues ou proposez vos améliorations via pull request.
