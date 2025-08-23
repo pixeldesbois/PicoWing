@@ -44,7 +44,7 @@ lipo 1s
 
 ---
 
-## ⚙️ Installation  - PARTIE A  VENIR
+## Installation  - PARTIE A  VENIR
 
 1. **Assembler** le PCB (ou commander pré-assemblé via JLCPCB).
 2. **Flasher** le firmware sur la carte via [PlatformIO](https://platformio.org/) ou Arduino IDE.
