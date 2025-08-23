@@ -72,8 +72,6 @@ Ce projet est distribué sous licence **MIT** pour le code et **CERN-OHL-S** pou
 
 
 
-![aperçu du projet](media/preview.jpg)
-
 ---
 
 ## Contributions
