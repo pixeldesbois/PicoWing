@@ -33,13 +33,16 @@ Il pourra gérer :
 - la mise en veille de la manette si non utilisé pendant plus de 60s. Un clic sur le joystick le réveillera.
 
 ### Matériel côté télécommande
-une carte ESP32 C3 PICO
-un module joystick KY-023
-une lipo 1s
+- une carte ESP32 C3 PICO
+- un module joystick KY-023
+- une lipo 1s
+
+### Firmware pour l'ESP C3 Pico
+Le source est dans le dossier `/hardware`
 
 ---
 
-## PicoWingPlane
+## PicoWingPlane - PARTIE A  VENIR
 
 ### Matériel côté avion - PARTIE A  VENIR
 ESP32 C3 PICO
@@ -47,7 +50,7 @@ carte DIY pemettant de gerer l'étage de puissance vers les moteurs
 lipo 1s
 2 moteurs coreless avec les hélices
 
-*(BOM complet dans le dossier `/hardware`)*
+*(BOM complet dans le dossier `/PicowingPilot/Firmware`)*
 
 
 
