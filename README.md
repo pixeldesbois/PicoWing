@@ -18,12 +18,19 @@ grâce à des cartes électroniques ultra-compactes intégrant :
 
 ---
 ## PicoWingPilot
-## Matériel côté télécommande
+
+C'est la télecommande du projet. Elle communique à l'avion via le protocole ESPNOW.
+L'ESP32 C3 Pico a été choisit car il intègre la gestion de l'alimentation et la recharge.
+
+### Matériel côté télécommande
 une carte ESP32 C3 PICO
 un module joystick KY-023
 une lipo 1s
 
-## Matériel côté avion - PARTIE A  VENIR
+---
+## PicoWingPlane
+
+### Matériel côté avion - PARTIE A  VENIR
 ESP32 C3 PICO
 carte DIY pemettant de gerer l'étage de puissance vers les moteurs
 lipo 1s
@@ -31,20 +38,7 @@ lipo 1s
 
 *(BOM complet dans le dossier `/hardware`)*
 
----
 
-
-
-
-
----
-
-## Objectifs  - PARTIE A  VENIR
-
-- Poids total électronique < **5 g**
-- Autonomie > **10 min**
-- Montage rapide
-- Ouverture totale du design (open-hardware et open-source)
 
 ---
 
