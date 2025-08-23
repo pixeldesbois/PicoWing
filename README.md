@@ -40,6 +40,8 @@ Il pourra gérer :
 ### Firmware pour l'ESP C3 Pico
 Le source est dans le dossier `/PicowingPilot/Firmware`
 
+!!!! EN COURS DE DEV !!!!
+
 ---
 
 ## PicoWingPlane - PARTIE A  VENIR
