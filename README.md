@@ -9,18 +9,18 @@ ATTENTION ! Je viens de commencer le projet. Donc rien n'est fonctionnel pour le
 ## Présentation
 
 L’objectif du projet est de transformer un simple avion en papier en appareil RC complet,  
-grâce à des cartes électroniques ultra-compacte intégrant :
+grâce à des cartes électroniques ultra-compactes intégrant :
 
 - Un système de commande radio (RC) ESPNOW
-- Deux MOSFET de puissance pour la gestion des 2 moteurs
+- Deux MOSFET de puissance pour la gestion de 2 moteurs
 - alimentation et recharge de la batterie lipo
 - Une conception permettant aux makers de tous niveaux d'en fabriquer !
 
 ---
 ## Matériel côté télécommande
-ESP32 C3 PICO
+une carte ESP32 C3 PICO
 un module joystick KY-023
-lipo 1s
+une lipo 1s
 
 ## Matériel côté avion - PARTIE A  VENIR
 ESP32 C3 PICO
