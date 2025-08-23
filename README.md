@@ -21,7 +21,7 @@ L’objectif du projet est de transformer un simple avion en papier en appareil 
 
 ## PicoWingPilot
 
-C'est la télecommande du projet. Elle permet le paase d'ordre à l'avion via le protocole ESPNOW.
+C'est la télecommande du projet. Elle permet le passage d'ordres à l'avion via le protocole ESPNOW.
 L'ESP32 C3 Pico a été choisit car il intègre la gestion de l'alimentation et la recharge.
 Il est en outre très compact.
 L'idée est de réaliser une manette proche d'une nunchuk mais il ne possèdera qu'un seul joystick.
@@ -29,8 +29,8 @@ Il pourra gérer :
 - l'appairage avec l'avion
 - le réglage du trim du roulis (droite/gauche)
 - le choix de la diffculté de pilotage
-- l'affichage d'alerte pour le niveau de batterie de l'avion (via la led RGB de la carte ESP32 C3 Pico)
-- la mise en veille de la manette si non utilisé pendant plus de 60s. Un clic sur le joystick le réveillera.
+- l'affichage d'alertes pour le niveau de batterie de l'avion (via la led RGB de la carte ESP32 C3 Pico)
+- la mise en veille de la manette si non utilisée pendant plus de 60s. Un clic sur le joystick le réveillera.
 
 ### Matériel côté télécommande
 - une carte ESP32 C3 PICO
@@ -38,7 +38,7 @@ Il pourra gérer :
 - une lipo 1s
 
 ### Firmware pour l'ESP C3 Pico
-Le source est dans le dossier `/hardware`
+Le source est dans le dossier `/PicowingPilot/Firmware`
 
 ---
 
