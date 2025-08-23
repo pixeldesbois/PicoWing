@@ -2,11 +2,9 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 
-// Pin et nombre de LED
 #define LED_PIN   7
 #define LED_COUNT 1
 
-// États possibles de la LED
 enum LedState {
     LED_OFF,
     LED_RED,
@@ -32,12 +30,20 @@ public:
     void override(LedState state, unsigned long durationMs = 2000);
     void update();
 
+    // fonctions “prêtes à l’emploi” pour le projet
+    void setPairingMode();     // clignotant bleu
+    void setPairAck();         // bleu fixe
+    void setTrimMode();        // clignotant blanc
+    void setGameModeEasy();    // vert fixe
+    void setGameModeHard();    // rouge fixe
+    void setBatteryLow();      // orange clignotant
+    void setBatteryCrit();     // rouge clignotant
+
 private:
     Adafruit_NeoPixel strip;
     LedState current;
     LedState overrideState;
     unsigned long overrideUntil;
-    bool blinkOn;
 
     void apply(LedState state, bool blinkPhase);
 };
