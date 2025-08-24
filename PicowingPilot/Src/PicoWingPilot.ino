@@ -1,130 +1,224 @@
 #include <Arduino.h>
-
-#define DEBUG_LEVEL 2 // (optionnel) avant d'inclure Debug.h
-#include "Debug.h"
-
-#include "LedManager.h"
+#include "esp_sleep.h"
 #include "RadioManager.h"
 #include "RadioLedBridge.h"
+#include "LedManager.h"
 #include "RadioTypes.h"
 
+#include "Debug.h"
 
 // ==========================================================
 // Brochage (Wemos LOLIN C3 Pico)
 // ==========================================================
-#define PIN_JOY_X   2    // ADC1_CH2 (AX)
-#define PIN_JOY_Y   3    // ADC1_CH3 (AY)
-#define PIN_BUTTON  4    // GPIO4, bouton (réveil deep-sleep)
-#define LED_PIN     7    // RGB LED WS2812 style sur Wemos C3 Pico
+#define PIN_JOY_X   2    // ADC1_CH2
+#define PIN_JOY_Y   3    // ADC1_CH3
+#define PIN_BUTTON  4    // GPIO4 (réveil deep-sleep)
+#define LED_PIN     7    // RGB LED WS2812
 
 // ==========================================================
-// Configuration
+// Constantes
 // ==========================================================
-#define INACTIVITY_TIMEOUT 30000   // 30s sans activité → deep sleep
-#define JOY_THRESHOLD      50      // seuil minimum de variation joystick
-
-// Mode de jeu : facile = 1.25, difficile = 1
-float gameMode = 1.25;
-
+#define INACTIVITY_TIMEOUT 30000UL   // 30 sec avant deep sleep
+#define ADC_MAX 4095                 // Résolution ADC ESP32-C3
+#define DEADZONE 200                 // Zone morte joystick
+#define CONFIG_WINDOW 30000UL        // 30s fenêtre config
+#define JOY_THRESHOLD 800            // Zone pour le choix de l'appairage
+// ==========================================================
+// Instances globales
+// ==========================================================
 RadioManager radio;
-LedManager led(LED_PIN);
-RadioLedBridge bridge(radio, led);
+LedManager leds(LED_PIN);
+RadioLedBridge bridge(radio, leds);
 
-unsigned long lastActivity = 0;   // dernière activité détectée
-int lastJoyX = 0, lastJoyY = 0;   // pour détecter le mouvement
+// ==========================================================
+// Etats et variables
+// ==========================================================
+static bool configMode = false;
+static unsigned long configStart = 0;
+static unsigned long lastActivity = 0;
 
-int gaz = 0;
-int roulis = 0;
-int trim = 0;
+static bool modeEasy = true; // coefficient de jeu
+static int8_t trimValue = 0;
 
-// ----------------------------------------------------------
-void goToSleep() {
-    Debug::log("Inactivité détectée → Deep Sleep...");
-    led.setState(LedState::OFF); // couper LED
+static unsigned long lastBtnPress = 0;
+static bool btnWasDown = false;
+static unsigned long btnDownTime = 0;
+static const unsigned long LONG_PRESS_TIME = 300; // 300ms = appui long
+static unsigned long lastTrimSent = 0;
+const unsigned long TRIM_INTERVAL = 200; // ms (5 Hz max)
 
-    // Config wakeup : bouton ou reset
-    esp_sleep_enable_ext0_wakeup((gpio_num_t)PIN_BUTTON, 0);
+// ==========================================================
+// Fonctions utilitaires
+// ==========================================================
+bool readJoystick(int16_t &jx, int16_t &jy) {
+    int x = analogRead(PIN_JOY_X);
+    int y = analogRead(PIN_JOY_Y);
 
-    delay(200); // laisser le temps au message série de partir
-    esp_deep_sleep_start();
+    jx = x - (ADC_MAX / 2);
+    jy = y - (ADC_MAX / 2);
+
+    // Applique une zone morte
+    if (abs(jx) < DEADZONE) jx = 0;
+    if (abs(jy) < DEADZONE) jy = 0;
+
+    return (jx != 0 || jy != 0);
 }
 
-
-// === STATE ===
-enum Mode { MODE_FACILE, MODE_DIFFICILE };
-Mode modeJeu = MODE_FACILE;
-
-bool configMode = false;
-bool paired = false;
-uint8_t pairedMAC[6] = {0}; // MAC de l’avion appairé
-
-int gaz = 0;
-int roulis = 0;
-int trim = 0;
-
-// === TIMER SLEEP ===
-unsigned long lastActivity = 0;
-const unsigned long INACTIVITY_TIMEOUT = 60000; // 1 min
-
-
-
-
-// === SETUP ===
-void setup() {
-  dbg::init(115200, true);
-  DBG("=== PicoWingPilot ===\n level=%d\n", dbg::buildLevel());
-
-  // Initialisation radio
-  radio.begin();
-  // Initialisation LED
-  led.begin();
-  // Lien radio <-> LED
-  bridge.begin();
-
-  // Configurer bouton
-  pinMode(PIN_BUTTON, INPUT_PULLUP);
-
-  // Référence initiale joystick
-  lastJoyX = analogRead(PIN_JOY_X);
-  lastJoyY = analogRead(PIN_JOY_Y);
-  lastActivity = millis();
-
-
-  //setLed(LED_CYAN); // boot calibration joystick
-  //overrideLedForEvent(LED_BLINK_CYAN, 2000);
-  
-  DBG("Système prêt !");
+bool readButton() {
+    return digitalRead(PIN_BUTTON) == LOW; // actif bas
 }
 
-// ----------------------------------------------------------
-void loop() {
-    // Lecture joystick
-    int joyX = analogRead(PIN_JOY_X);
-    int joyY = analogRead(PIN_JOY_Y);
-
-    // Détection activité joystick
-    if (abs(joyX - lastJoyX) > JOY_THRESHOLD || abs(joyY - lastJoyY) > JOY_THRESHOLD) {
-        lastActivity = millis();
-        lastJoyX = joyX;
-        lastJoyY = joyY;
-    }
-
-    // Détection bouton
-    if (digitalRead(PIN_BUTTON) == LOW) {
-        lastActivity = millis();
-    }
-
-    // Transmission
-    radio.sendJoystick(joyX, joyY);
-
-    // Gestion radio + LED
-    radio.loop();
-    led.loop();
-
-    // Vérif inactivité
+// ==========================================================
+// Deep sleep si inactif
+// ==========================================================
+void checkInactivity() {
     if (millis() - lastActivity > INACTIVITY_TIMEOUT) {
-        goToSleep();
+        DBG("Inactivité détectée, passage en deep sleep");
+        leds.setState(LedState::OFF);
+        delay(100);
+
+        esp_sleep_enable_ext0_wakeup((gpio_num_t)PIN_BUTTON, 0); // wake par bouton
+        esp_deep_sleep_start();
+    }
+}
+
+// ==========================================================
+// Radio callbacks
+// ==========================================================
+void onRadioReceive(const uint8_t* mac, const uint8_t* data, int len) {
+    if (len <= 0) return;
+
+    uint8_t type = data[0];
+
+    switch (type) {
+        case MSG_PAIR_ACK:
+            leds.setPairAck();  // bleu fixe
+            DBG("Pairing ACK reçu !");
+            break;
+        case MSG_BAT_LOW:
+            leds.setBatteryLow();
+            break;
+        case MSG_BAT_CRIT:
+            leds.setBatteryCrit();
+            break;
+        default:
+            break;
+    }
+}
+
+// ==========================================================
+// Setup
+// ==========================================================
+void setup() {
+    pinMode(PIN_BUTTON, INPUT_PULLUP);
+
+    DBG("=== PicoWingPilot démarrage ===");
+
+    leds.begin();
+    radio.begin();
+ 
+    radio.addRecvHandler(onRadioReceive);
+    bridge.begin();
+
+    // Fenêtre config de 30s pour la pairing
+    configStart = millis();
+    configMode = true;
+    leds.setPairingMode(); // clignotant bleu
+
+    lastActivity = millis();
+}
+
+// ==========================================================
+// Loop
+// ==========================================================
+void loop() {
+    int16_t jx = 0, jy = 0;
+    bool active = false;
+
+    // Lecture joystick
+    bool joyMoved = readJoystick(jx, jy);
+    bool btn = readButton();
+
+    // ======================================================
+    // Gestion bouton (détection appui court / long)
+    // ======================================================
+    if (btn && !btnWasDown) {  
+        // Nouveau press
+        btnWasDown = true;
+        btnDownTime = millis();
+    }
+    else if (!btn && btnWasDown) {  
+        // Bouton relâché
+        unsigned long pressDuration = millis() - btnDownTime;
+
+        if (pressDuration < LONG_PRESS_TIME) {
+            // Appui court → possible double clic
+            if (millis() - lastBtnPress < 500) {
+                modeEasy = !modeEasy;
+                if (modeEasy) leds.setGameModeEasy();  
+                else leds.setGameModeHard();
+            }
+            lastBtnPress = millis();
+        }
+        btnWasDown = false;
     }
 
-    delay(50);
+    // ======================================================
+    // Mode config : appui long + joystick haut/bas
+    // ======================================================
+    if (configMode && millis() - configStart < CONFIG_WINDOW) {
+        if (btnWasDown && (millis() - btnDownTime > LONG_PRESS_TIME)) {
+            if (jy > JOY_THRESHOLD) {
+                DBG("Demande d'appairage (appui long)");
+                radio.sendPairReq();
+            } else if (jy < -JOY_THRESHOLD) {
+                DBG("Demande de desappairage (appui long)");
+                radio.sendUnpair();
+            }
+        }
+    } else {
+        configMode = false; 
+        if (radio.hasPaired()) leds.setGameModeEasy(); 
+    }
+
+    // ======================================================
+    // Pilotage
+    // ======================================================
+    if (joyMoved && radio.hasPaired()) {
+        uint8_t motorL = 0, motorR = 0;
+        float coeff = modeEasy ? 1.25f : 1.0f;
+        int16_t roll = jx / coeff;
+        int16_t gas  = jy;
+
+        motorL = constrain(gas - roll, 0, 255);
+        motorR = constrain(gas + roll, 0, 255);
+
+        bridge.sendMotorPWM(motorL, motorR);
+        active = true;
+    }
+
+    // ======================================================
+    // Trim : bouton maintenu + joystick gauche/droite
+    // ======================================================
+    if (btnWasDown && joyMoved) {
+      if (millis() - lastTrimSent > TRIM_INTERVAL) {
+        trimValue = map(jx, 
+                        (jx > 0 ? 0 : -(ADC_MAX / 2)), 
+                        (jx > 0 ? (ADC_MAX / 2) : 0), 
+                        (jx > 0 ? 0 : -45), 
+                        (jx > 0 ? 45 : 0));
+        trimValue = constrain(trimValue, -45, 45);
+        bridge.sendTrim(trimValue);
+        active = true;
+        lastTrimSent = millis(); // reset timer
+      }
+    }
+
+    // ======================================================
+    // Mise à jour LED / radio / inactivité
+    // ======================================================
+    bridge.update();
+    leds.update();
+    if (active) lastActivity = millis();
+    checkInactivity();
 }
