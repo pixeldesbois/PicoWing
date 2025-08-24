@@ -1,6 +1,9 @@
 # PicoWing
 
 **PicoWing** est un projet open-source d’**avion en papier radiocommandé (RC)**, combinant électronique embarquée, plaisir de voler.  
+Ce projet est divisé en 2 parties :
+- PicoWingPilot : la télécommande
+- PicoWingPlane : la motorisation de l'avion en papier
 
 ---
 
