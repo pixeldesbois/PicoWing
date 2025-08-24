@@ -77,7 +77,8 @@ void checkInactivity() {
         leds.setState(LedState::OFF);
         delay(100);
 
-        esp_sleep_enable_ext0_wakeup((gpio_num_t)PIN_BUTTON, 0); // wake par bouton
+        //esp_sleep_enable_ext0_wakeup((gpio_num_t)PIN_BUTTON, 0); // wake par bouton
+        gpio_wakeup_enable((gpio_num_t)PIN_BUTTON, GPIO_INTR_LOW_LEVEL);
         esp_deep_sleep_start();
     }
 }
@@ -192,8 +193,8 @@ void loop() {
 
         motorL = constrain(gas - roll, 0, 255);
         motorR = constrain(gas + roll, 0, 255);
-
-        bridge.sendMotorPWM(motorL, motorR);
+        static uint16_t seq = 0;
+        radio.sendCtrl(motorL, motorR, seq++, 0);
         active = true;
     }
 
@@ -208,7 +209,7 @@ void loop() {
                         (jx > 0 ? 0 : -45), 
                         (jx > 0 ? 45 : 0));
         trimValue = constrain(trimValue, -45, 45);
-        bridge.sendTrim(trimValue);
+        radio.sendTrim(trimValue);
         active = true;
         lastTrimSent = millis(); // reset timer
       }
@@ -217,7 +218,7 @@ void loop() {
     // ======================================================
     // Mise à jour LED / radio / inactivité
     // ======================================================
-    bridge.update();
+    bridge.loop();
     leds.update();
     if (active) lastActivity = millis();
     checkInactivity();

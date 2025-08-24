@@ -2,7 +2,6 @@
 #include <Arduino.h>
 #include <Preferences.h>
 #include <esp_now.h>
-#include <WiFi.h>
 #include <vector>
 #include <functional>
 #include <algorithm>
@@ -33,6 +32,7 @@ private:
     uint8_t pairedMac[6];
     bool paired;
     uint8_t channel;
+    uint16_t seqCounter = 0; 
     std::vector<RadioRecvHandler> recvHandlers;
 
     void handleRecv(const uint8_t* mac, const uint8_t* data, int len);

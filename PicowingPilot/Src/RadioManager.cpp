@@ -1,3 +1,5 @@
+#include <WiFi.h>
+#include "esp_wifi.h"
 #include "RadioManager.h"
 #include "Debug.h"
 
@@ -59,6 +61,9 @@ void RadioManager::setPairedMac(const uint8_t mac[6]){
 bool RadioManager::hasPaired() const { return paired; }
 
 esp_err_t RadioManager::sendCtrl(uint8_t l, uint8_t r, uint16_t seq, uint8_t flags){
+    if (seq == 0) {
+      seq = ++seqCounter;
+    }
     CtrlMsg msg{MSG_CTRL_PWM, l, r, seq, flags};
     return esp_now_send(pairedMac, (uint8_t*)&msg, sizeof(msg));
 }
@@ -88,8 +93,14 @@ void RadioManager::removeRecvHandler(RadioRecvHandler handler){
 }
 
 // Callbacks statiques
-void RadioManager::onDataRecvStatic(const uint8_t* mac, const uint8_t* data, int len){
-    if(instance) instance->handleRecv(mac, data, len);
+void RadioManager::onDataRecvStatic(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
+    if (!instance) return;
+
+    // Récupérer l'adresse MAC source depuis info
+    const uint8_t *mac = info->src_addr;
+
+    // Puis relayer à l'instance
+    instance->onDataRecv(mac, data, len);
 }
 
 void RadioManager::handleRecv(const uint8_t* mac, const uint8_t* data, int len){
