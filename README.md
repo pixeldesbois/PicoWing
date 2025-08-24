@@ -42,8 +42,11 @@ Il pourra gérer :
 - une lipo 1s
 
 ### Firmware pour l'ESP C3 Pico
-Le source est dans le dossier `/PicowingPilot/Src`
+
 !!!! EN COURS DE DEV !!!! 
+
+Le source est dans le dossier `/PicowingPilot/Src`
+
 Depuis l'application arduino IDE, il faudra compiler le binaire après avoir téléchargé les fichiers.
 Il faut avoir installer la bibliothèque *<Adafruit_NeoPixel* pour que la compilation fonctionne.
 
