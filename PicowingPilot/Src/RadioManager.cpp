@@ -2,10 +2,11 @@
 #include "esp_wifi.h"
 #include "RadioManager.h"
 #include "Debug.h"
+#include <algorithm> // pour remove_if
 
 RadioManager* RadioManager::instance = nullptr;
 
-RadioManager::RadioManager() : paired(false), channel(1) {
+RadioManager::RadioManager() : paired(false), channel(1), nextHandlerId(1) {
     memset(pairedMac, 0, sizeof(pairedMac));
     instance = this;
 }
@@ -83,30 +84,35 @@ esp_err_t RadioManager::sendUnpair(){
     return esp_now_send(pairedMac, &msg, 1);
 }
 
-// Observers
-void RadioManager::addRecvHandler(RadioRecvHandler handler){
-    recvHandlers.push_back(handler);
+// -------------------------
+// Gestion des handlers avec ID
+// -------------------------
+
+int RadioManager::addRecvHandler(RadioRecvHandler handler){
+    int id = nextHandlerId++;
+    recvHandlers.push_back({id, handler});
+    return id; // retourne l'ID pour suppression ultérieure
 }
 
-void RadioManager::removeRecvHandler(RadioRecvHandler handler){
-    recvHandlers.erase(std::remove(recvHandlers.begin(), recvHandlers.end(), handler), recvHandlers.end());
+void RadioManager::removeRecvHandler(int id){
+    recvHandlers.erase(
+        std::remove_if(recvHandlers.begin(), recvHandlers.end(),
+                       [id](const HandlerEntry &h){ return h.id == id; }),
+        recvHandlers.end()
+    );
+}
+
+void RadioManager::handleRecv(const uint8_t* mac, const uint8_t* data, int len){
+    for(auto &h : recvHandlers){
+        h.handler(mac, data, len);
+    }
 }
 
 // Callbacks statiques
 void RadioManager::onDataRecvStatic(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
     if (!instance) return;
-
-    // Récupérer l'adresse MAC source depuis info
     const uint8_t *mac = info->src_addr;
-
-    // Puis relayer à l'instance
-    instance->onDataRecv(mac, data, len);
-}
-
-void RadioManager::handleRecv(const uint8_t* mac, const uint8_t* data, int len){
-    for(auto &h : recvHandlers){
-        h(mac, data, len);
-    }
+    instance->handleRecv(mac, data, len);
 }
 
 void RadioManager::onDataSentStatic(const uint8_t* mac, esp_now_send_status_t status){
