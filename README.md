@@ -41,6 +41,17 @@ Il pourra gérer :
 - un module joystick KY-023
 - une lipo 1s
 
+### Schéma de montage
+
+![Schéma de câblage](PicowingPilot/Images/schema.png)
+
+**Connexions :**
+- 🟢 **GPIO 2** → VRX (Axe X du joystick)
+- 🟡 **GPIO 3** → VRY (Axe Y du joystick) 
+- 🟣 **GPIO 4** → SW (Bouton joystick)
+- 🔴 **5V** → VCC (Alimentation KY-023)
+- ⚫ **GND** → GND (Masse commune)
+- 
 ### Firmware pour l'ESP C3 Pico
 
 !!!! EN COURS DE DEV - ECRITURE DU SOURCE OK MAIS IL FAUT TESTER!!!! 
