@@ -43,12 +43,19 @@ Il pourra gérer :
 
 ### Firmware pour l'ESP C3 Pico
 
-!!!! EN COURS DE DEV !!!! 
+!!!! EN COURS DE DEV - ECRITURE DU SOURCE OK MAIS IL FAUT TESTER!!!! 
 
 Le source est dans le dossier `/PicowingPilot/Src`
 
 Depuis l'application arduino IDE, il faudra compiler le binaire après avoir téléchargé les fichiers.
 Il faut avoir installer la bibliothèque *Adafruit_NeoPixel* pour que la compilation fonctionne.
+Il faut égalment selection la carte *LOLIN C3 Pico*
+- Ouvrir Arduino IDE → Fichier → Préférences.
+- Dans URL de gestionnaire de cartes supplémentaires, s'assurer d’avoir :
+`https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
+- Ensuite : Outils → Type de carte → Gestionnaire de cartes → chercher esp32 → installer la dernière version.
+- Après installation, va dans Outils → Type de carte → ESP32 Arduino → LOLIN C3 Pico.
+- Vérifie aussi : Fréquence CPU, Flash Size, etc. par défaut ça passe.
 
 Il doit être possible de compiler via PlateformIO mais je ne l'utilise pas donc je ne connais pas les paramètres à y appliquer.
 
