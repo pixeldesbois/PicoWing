@@ -27,7 +27,8 @@ L’objectif du projet est de transformer un simple avion en papier en appareil 
 C'est la télecommande du projet. Elle permet le passage d'ordres à l'avion via le protocole ESPNOW.
 L'ESP32 C3 Pico a été choisit car il intègre la gestion de l'alimentation et la recharge.
 Il est en outre très compact.
-L'idée est de réaliser une manette proche d'une nunchuk mais il ne possèdera qu'un seul joystick.
+L'idée est de réaliser une manette proche d'une nunchuk mais il ne possèdera qu'un seul joystick et pas d'autres boutons.
+Pourquoi ? tout simplement pour qu'il y est le moins de soudures possibles et que cela soit donc réalisable par le plus grand nombre !
 Il pourra gérer :
 - l'appairage avec l'avion
 - le réglage du trim du roulis (droite/gauche)
