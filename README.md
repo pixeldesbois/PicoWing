@@ -51,7 +51,7 @@ Il pourra gérer :
 - 🟣 **GPIO 4** → SW (Bouton joystick)
 - 🔴 **5V** → VCC (Alimentation KY-023)
 - ⚫ **GND** → GND (Masse commune)
-- 
+
 ### Firmware pour l'ESP C3 Pico
 
 !!!! EN COURS DE DEV - ECRITURE DU SOURCE OK MAIS IL FAUT TESTER!!!! 
