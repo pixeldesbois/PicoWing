@@ -47,10 +47,10 @@ Le source est dans le dossier `/PicowingPilot/Firmware`
 ## PicoWingPlane - PARTIE A  VENIR
 
 ### Matériel côté avion - PARTIE A  VENIR
-ESP32 C3 PICO
-carte DIY pemettant de gerer l'étage de puissance vers les moteurs
-lipo 1s
-2 moteurs coreless avec les hélices
+- ESP32 C3 PICO
+- carte DIY pemettant de gerer l'étage de puissance vers les moteurs
+- lipo 1s
+- 2 moteurs coreless avec les hélices
 
 
 
