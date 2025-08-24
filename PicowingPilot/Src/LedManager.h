@@ -8,7 +8,7 @@ enum class LedState : uint8_t {
     RED,
     BLUE,
     WHITE,
-    ORANGE,
+    BLINK_ORANGE,
     BLINK_GREEN,
     BLINK_RED,
     BLINK_BLUE,
