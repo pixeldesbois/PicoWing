@@ -15,6 +15,7 @@ void RadioManager::begin(uint8_t ch){
     channel = ch;
 
     WiFi.mode(WIFI_STA);
+    esp_wifi_set_ps(WIFI_PS_NONE);
     esp_wifi_set_promiscuous(true);
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
     esp_wifi_set_promiscuous(false);
@@ -39,7 +40,9 @@ void RadioManager::begin(uint8_t ch){
         memcpy(peer.peer_addr, pairedMac, 6);
         peer.channel = channel;
         peer.encrypt = false;
-        esp_now_add_peer(&peer);
+        if (esp_now_is_peer_exist(pairedMac) == false) {
+          ESP_ERROR_CHECK_WITHOUT_ABORT(esp_now_add_peer(&peer));
+        }
     }
     prefs.end();
 }
@@ -56,15 +59,18 @@ void RadioManager::setPairedMac(const uint8_t mac[6]){
     memcpy(peer.peer_addr, mac, 6);
     peer.channel = channel;
     peer.encrypt = false;
-    esp_now_add_peer(&peer);
+    if (esp_now_is_peer_exist(pairedMac) == false) {
+      ESP_ERROR_CHECK_WITHOUT_ABORT(esp_now_add_peer(&peer));
+    }
 }
 
 bool RadioManager::hasPaired() const { return paired; }
 
 esp_err_t RadioManager::sendCtrl(uint8_t l, uint8_t r, uint16_t seq, uint8_t flags){
     if (seq == 0) {
-      seq = ++seqCounter;
+      seq = (++seqCounter == 0) ? 1 : seqCounter;
     }
+    
     CtrlMsg msg{MSG_CTRL_PWM, l, r, seq, flags};
     return esp_now_send(pairedMac, (uint8_t*)&msg, sizeof(msg));
 }
@@ -80,8 +86,20 @@ esp_err_t RadioManager::sendPairReq(){
 }
 
 esp_err_t RadioManager::sendUnpair(){
-    uint8_t msg = MSG_UNPAIR;
-    return esp_now_send(pairedMac, &msg, 1);
+    if (paired) {
+        uint8_t msg = MSG_UNPAIR;
+        esp_now_send(pairedMac, &msg, 1);
+
+        esp_now_del_peer(pairedMac);
+        memset(pairedMac, 0, 6);
+        paired = false;
+
+        prefs.begin("picowing", false);
+        prefs.remove("mac");
+        prefs.end();
+    }
+    return ESP_OK;
+
 }
 
 // -------------------------
@@ -91,7 +109,7 @@ esp_err_t RadioManager::sendUnpair(){
 int RadioManager::addRecvHandler(RadioRecvHandler handler){
     int id = nextHandlerId++;
     recvHandlers.push_back({id, handler});
-    return id; // retourne l'ID pour suppression ultérieure
+    return id;
 }
 
 void RadioManager::removeRecvHandler(int id){
@@ -116,5 +134,7 @@ void RadioManager::onDataRecvStatic(const esp_now_recv_info_t *info, const uint8
 }
 
 void RadioManager::onDataSentStatic(const uint8_t* mac, esp_now_send_status_t status){
-    (void)mac; (void)status;
+    DBG("Send to %02X:%02X:%02X:%02X:%02X:%02X -> %s\n",
+        mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
+        status == ESP_NOW_SEND_SUCCESS ? "OK" : "FAIL");
 }
