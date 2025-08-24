@@ -48,9 +48,11 @@ Il pourra gérer :
 Le source est dans le dossier `/PicowingPilot/Src`
 
 Depuis l'application arduino IDE, il faudra compiler le binaire après avoir téléchargé les fichiers.
-Il faut avoir installer la bibliothèque *<Adafruit_NeoPixel* pour que la compilation fonctionne.
+Il faut avoir installer la bibliothèque *Adafruit_NeoPixel* pour que la compilation fonctionne.
 
 Il doit être possible de compiler via PlateformIO mais je ne l'utilise pas donc je ne connais pas les paramètres à y appliquer.
+
+Je proposerai plus tard au téléchargement le fichier *.bin* près à être uploadé dans le c3 pico.
 
 ---
 
