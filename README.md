@@ -39,7 +39,7 @@ Il pourra gérer :
 ### Matériel côté télécommande
 - une carte ESP32 C3 PICO
 - un module joystick KY-023
-- une lipo 1s
+- une lipo 1s - 500mha (c'est suffisant)
 
 ### Schéma de montage
 
@@ -60,7 +60,7 @@ Le source est dans le dossier `/PicowingPilot/Src`
 
 Depuis l'application arduino IDE, il faudra compiler le binaire après avoir téléchargé les fichiers.
 Il faut avoir installer la bibliothèque *Adafruit_NeoPixel* pour que la compilation fonctionne.
-Il faut égalment selection la carte *LOLIN C3 Pico*
+Il faut également sélectionner la carte *LOLIN C3 Pico*
 - Ouvrir Arduino IDE → Fichier → Préférences.
 - Dans URL de gestionnaire de cartes supplémentaires, s'assurer d’avoir :
 `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
