@@ -34,10 +34,13 @@
 
 #define RX_TIMEOUT_MS 900
 #define PAIRING_TIMEOUT_MS 30000
+#define BATTERY_UPDATE_PERIOD 1000     // ms pour lecture batterie
+#define LED_UPDATE_PERIOD     150      // ms pour mise à jour LED
 
 #define BATTERY_PIN 3       // GPIO3 = VBAT
 #define BATTERY_LOW 3300
 #define BATTERY_CRIT 3100
+
 
 // ==========================================================
 // NVS
@@ -77,6 +80,7 @@ void clearPairedMAC(){ macClear(pairedMac); clearNVS(); receivedFromPaired = fal
 // ==========================================================
 // Moteurs
 // ==========================================================
+static uint8_t lastL=0, lastR=0;
 void motorsInit(){
   ledcSetup(L_CH, PWM_FREQ, PWM_RES);
   ledcSetup(R_CH, PWM_FREQ, PWM_RES);
@@ -92,8 +96,15 @@ void motorsWrite(uint8_t l, uint8_t r){
   int rAdj = r;
   if (trimValue < 0) lAdj = clamp255(l + trimValue);
   else if (trimValue > 0) rAdj = clamp255(r + trimValue);
-  ledcWrite(L_CH, lAdj);
-  ledcWrite(R_CH, rAdj);
+    // Ne mettre à jour que si différent de la dernière valeur
+    if(lAdj != lastL){
+        ledcWrite(L_CH, lAdj);
+        lastL = lAdj;
+    }
+    if(rAdj != lastR){
+        ledcWrite(R_CH, rAdj);
+        lastR = rAdj;
+    }
   DBG_VERBOSE("Motors PWM: L=%d R=%d\n", lAdj, rAdj);
 }
 
@@ -117,10 +128,15 @@ struct TrimMsg { uint8_t type; int8_t trim; };
 #pragma pack(pop)
 
 static uint32_t lastRxMs = 0;
+static uint32_t lastBatteryMs = 0;
+static uint32_t lastLedUpdateMs = 0;
+static uint16_t lastBatteryMv = 0;
 
 void enterPairingNotice(){ DBG("⏳ Pas de MAC appairée -> attente d'appairage...\n"); }
 
 static uint16_t lastSeq = 0;
+
+
 bool seqIsNewer(uint16_t newSeq, uint16_t lastSeq){
     return (uint16_t)(newSeq - lastSeq) < 0x8000;
 }
@@ -182,23 +198,18 @@ uint16_t readBatteryMilliVolts(){
   return (uint16_t)(voltage * 1000);
 }
 
-void checkBattery(){
-  uint16_t mv = readBatteryMilliVolts();
-  unsigned long now = millis();
-  if(now - lastBatteryMsgMs < 1000) return;
-
-  if (mv <= BATTERY_CRIT){
-    motorsWrite(0,0);
-    DBG("⚡ Batterie critique: %dmV -> moteurs arrêtés\n", mv);
-    uint8_t msg[2] = { MSG_BAT_CRIT, 0 };
-    esp_now_send(pairedMac, msg, sizeof(msg));
-    lastBatteryMsgMs = now;
-  } else if (mv <= BATTERY_LOW){
-    DBG("⚡ Batterie faible: %dmV\n", mv);
-    uint8_t msg[2] = { MSG_BAT_LOW, 0 };
-    esp_now_send(pairedMac, msg, sizeof(msg));
-    lastBatteryMsgMs = now;
-  }
+void checkBattery(uint16_t batteryMv){
+    if (batteryMv <= BATTERY_CRIT){
+        motorsWrite(0,0);
+        DBG("⚡ Batterie critique: %dmV -> moteurs arrêtés\n", batteryMv);
+        uint8_t msg[2] = { MSG_BAT_CRIT, 0 };
+        esp_now_send(pairedMac, msg, sizeof(msg));
+    } 
+    else if (batteryMv <= BATTERY_LOW){
+        DBG("⚡ Batterie faible: %dmV\n", batteryMv);
+        uint8_t msg[2] = { MSG_BAT_LOW, 0 };
+        esp_now_send(pairedMac, msg, sizeof(msg));
+    }
 }
 
 // ==========================================================
@@ -226,19 +237,19 @@ void ledSet(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void ledUpdate(bool paired, uint16_t batteryMv, uint32_t ms) {
-	bool blink = ((ms % LED_BLINK_PERIOD) < (LED_BLINK_PERIOD/2));
-	uint8_t r=0, g=0, b=0;
+    bool blink = ((ms % LED_BLINK_PERIOD) < (LED_BLINK_PERIOD/2));
+    uint8_t r=0, g=0, b=0;
 
-	if(!paired) { r=0; g=0; b=blink ? LED_MAX_BRIGHTNESS : 0; }
-	else if(batteryMv > BATTERY_LOW) { r=0; g=blink ? LED_MAX_BRIGHTNESS : 0; b=0; }
-	else if(batteryMv > BATTERY_CRIT) { r=blink ? LED_MAX_BRIGHTNESS : 0; g=blink ? LED_MAX_BRIGHTNESS/2 : 0; b=0; }
-	else { r=blink ? LED_MAX_BRIGHTNESS : 0; g=0; b=0; }
+    if(!paired) { r=0; g=0; b=blink ? LED_MAX_BRIGHTNESS : 0; }
+    else if(batteryMv > BATTERY_LOW) { r=0; g=blink ? LED_MAX_BRIGHTNESS : 0; b=0; }
+    else if(batteryMv > BATTERY_CRIT) { r=blink ? LED_MAX_BRIGHTNESS : 0; g=blink ? LED_MAX_BRIGHTNESS/2 : 0; b=0; }
+    else { r=blink ? LED_MAX_BRIGHTNESS : 0; g=0; b=0; }
 
-	uint32_t color = (r<<16)|(g<<8)|b;
-	if(color != lastColor){
-		lastColor = color;
-		ledSet(r,g,b);
-	}
+    uint32_t color = (r<<16)|(g<<8)|b;
+    if(color != lastColor){
+        lastColor = color;
+        ledSet(r,g,b);
+    }
 }
 
 
@@ -287,13 +298,16 @@ void loop(){
   }
 
   // Batterie
-  if(!macIsZero(pairedMac)) checkBattery();
+	if(!macIsZero(pairedMac) && now - lastBatteryMs > BATTERY_UPDATE_PERIOD) {
+		lastBatteryMv = readBatteryMilliVolts();
+		checkBattery(lastBatteryMv);  // utiliser lastBatteryMv dans checkBattery si possible
+		lastBatteryMs = now;
+	}
 
-  // LED RGB
-  if (now - lastLedUpdateMs > LED_UPDATE_PERIOD) {
-        ledUpdate(!macIsZero(pairedMac), readBatteryMilliVolts(), now);
+    // ---- Mise à jour LED ----
+    if(now - lastLedUpdateMs > LED_UPDATE_PERIOD) {
+        ledUpdate(!macIsZero(pairedMac), lastBatteryMv, now);
         lastLedUpdateMs = now;
     }
 
-  delay(50);
 }
